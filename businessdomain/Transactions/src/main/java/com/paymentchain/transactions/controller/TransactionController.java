@@ -1,5 +1,6 @@
 package com.paymentchain.transactions.controller;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,15 +55,26 @@ public class TransactionController {
 	
 	@PostMapping()
 	public ResponseEntity<?> post(@RequestBody Transaction transaction){
+		if(transaction.getFee()> 0) {
+			transaction.setAmount(transaction.getAmount()-transaction.getFee());
+		}
+		if(transaction.getAmount() == 0) {
+			return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
+		}
+		Date dateNow = new Date();
+		if(dateNow.equals(transaction.getDate()) || dateNow.before(transaction.getDate())) {
+			transaction.setStatus("02");
+		} else {
+			transaction.setStatus("01");
+		}
 		Transaction save = transactionRepository.save(transaction);
 		return ResponseEntity.ok(save);
 	}
 	
 	@DeleteMapping("/{id}")
 	public ResponseEntity<?> delete(@PathVariable Long id) {
-		return null;
-		/*transactionRepository.deleteById(id);
-		return ResponseEntity.ok(HttpStatus.ACCEPTED);*/
+		transactionRepository.deleteById(id);
+		return ResponseEntity.ok(HttpStatus.ACCEPTED);
 	}
 	
 }
